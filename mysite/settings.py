@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, 'secrets', os.environ.get('SECRET_FILE'))
+CALENDAR_ID = os.environ.get('CALENDAR_ID')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
