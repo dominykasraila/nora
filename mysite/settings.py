@@ -11,14 +11,16 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Support env variables from .env file if defined
-import os
 from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, 'secrets', os.environ.get('SECRET_FILE'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -38,6 +40,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'app.apps.AppConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
