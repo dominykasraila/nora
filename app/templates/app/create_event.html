@@ -1,14 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create Event</title>
-</head>
-<body>
-    <h1>Create Event</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Create Event</button>
-    </form>
-</body>
-</html>
+{% extends 'app/base.html' %}
+
+{% block content %}
+  <h1>Create Event</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create Event</button>
+  </form>
+{% endblock %}
