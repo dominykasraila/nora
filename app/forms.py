@@ -1,14 +1,16 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Submit
+import os
+from django.conf import settings
 
 class ReservationForm(forms.Form):
-    name = forms.CharField(label='Jūsų vardas', max_length=100)
-    email = forms.EmailField(label='El. paštas', max_length=100)
-    phone = forms.CharField(label='Telefono numeris', max_length=100)
-    child_name = forms.CharField(label='Vaiko vardas', max_length=100)
-    child_age = forms.IntegerField(label='Vaiko amžius mėnesiais')
-    comment = forms.CharField(label='Komentaras', widget=forms.Textarea, required=False)
+    name = forms.CharField(label='Jūsų vardas', max_length=100, initial='Test User' if settings.DEBUG else '')
+    email = forms.EmailField(label='El. paštas', max_length=100, initial='test@example.com' if settings.DEBUG else '')
+    phone = forms.CharField(label='Telefono numeris', max_length=100, initial='+37060000000' if settings.DEBUG else '')
+    child_name = forms.CharField(label='Vaiko vardas', max_length=100, initial='Test Child' if settings.DEBUG else '')
+    child_age = forms.IntegerField(label='Vaiko amžius mėnesiais', initial=12 if settings.DEBUG else None)
+    comment = forms.CharField(label='Komentaras', widget=forms.Textarea, required=False, initial='Test comment' if settings.DEBUG else '')
     slot_start = forms.DateTimeField(widget=forms.HiddenInput())
     service = forms.ChoiceField(
         choices=[
@@ -16,7 +18,8 @@ class ReservationForm(forms.Form):
             ('Atvykimas į namus', 'Atvykimas į namus'),
             ('Online konsultacija', 'Online konsultacija'),
         ],
-        label='Paslauga'
+        label='Paslauga',
+        initial='Online konsultacija' if settings.DEBUG else ''
     )
     city = forms.ChoiceField(
         choices=[
@@ -27,7 +30,8 @@ class ReservationForm(forms.Form):
             ('Šventoji', 'Šventoji'),
         ],
         label='Miestas',
-        required=False
+        required=False,
+        initial='Klaipėda' if settings.DEBUG else ''
     )
 
     def clean(self):

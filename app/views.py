@@ -92,11 +92,30 @@ def reserve_slot(request):
                 q='Rezervacija',
             ).execute()
 
+            # Check whether the requested slot exists in the available slots
+            available_slots_result = service.events().list(
+                calendarId=settings.CALENDAR_ID,
+                timeMin=slot_start.isoformat(),
+                timeMax=slot_end.isoformat(),
+                singleEvents=True,
+                orderBy='startTime',
+                q='Langas',
+            ).execute()
+
+            available_slots = available_slots_result.get('items', [])
+            slot_exists = any(
+                slot_start <= datetime.datetime.fromisoformat(slot['start'].get('dateTime').replace('Z', '+00:00')) < slot_end
+                for slot in available_slots
+            )
+
+            if not slot_exists:
+                form.add_error(None, 'Pasirinktas laikas nėra galimas.')
+
             conflicting_events = events_result.get('items', [])
             if conflicting_events:
                 form.add_error(None, 'Pasirinktas laikas jau rezervuotas.')
-                slot_start = request.GET.get('slot_start')
-            else:
+
+            if form.is_valid():
                 event = {
                     'summary': 'Rezervacija',
                     'description': (
