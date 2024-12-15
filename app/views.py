@@ -2,6 +2,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.core.paginator import Paginator
 from .forms import ReservationForm
 from .utils import get_google_calendar_service
 import datetime
@@ -10,15 +11,14 @@ from collections import defaultdict
 def index(request):
     return render(request, 'app/index.html')
 
-def available_slots(request):
-    service = get_google_calendar_service()
+def get_available_slots(service, slot_start, slot_end):
+    # Ensure the slot_start is at least one day in the future, but not necessarily 24 hours
+    slot_start2 = max(slot_start, datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=1))
 
-    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    
     events_result = service.events().list(
         calendarId=settings.CALENDAR_ID,
-        timeMin=now,
-        maxResults=10,
+        timeMin=slot_start2.isoformat(),
+        timeMax=slot_end.isoformat(),
         singleEvents=True,
         orderBy='startTime',
         q='Langas',
@@ -26,8 +26,8 @@ def available_slots(request):
 
     reservations_result = service.events().list(
         calendarId=settings.CALENDAR_ID,
-        timeMin=now,
-        maxResults=10,
+        timeMin=slot_start.isoformat(),
+        timeMax=slot_end.isoformat(),
         singleEvents=True,
         orderBy='startTime',
         q='Rezervacija',
@@ -37,10 +37,17 @@ def available_slots(request):
     reservations = reservations_result.get('items', [])
 
     slots_by_date = defaultdict(list)
+    current_date = slot_start.date()
+    end_date = slot_end.date()
+
+    while current_date <= end_date:
+        slots_by_date[current_date] = []
+        current_date += datetime.timedelta(days=1)
+
     for event in events:
-        event_start_str = event['start'].get('dateTime', event['start'].get('date'))
+        event_start_str = event['start']['dateTime']
         event_start = datetime.datetime.fromisoformat(event_start_str.replace('Z', '+00:00'))
-        event_end_str = event['end'].get('dateTime', event['end'].get('date'))
+        event_end_str = event['end']['dateTime']
         event_end = datetime.datetime.fromisoformat(event_end_str.replace('Z', '+00:00'))
         
         slot_start = event_start
@@ -50,9 +57,9 @@ def available_slots(request):
             
             does_overlap = False
             for reservation in reservations:
-                reservation_start_str = reservation['start'].get('dateTime', reservation['start'].get('date'))
+                reservation_start_str = reservation['start']['dateTime']
                 reservation_start = datetime.datetime.fromisoformat(reservation_start_str.replace('Z', '+00:00'))
-                reservation_end_str = reservation['end'].get('dateTime', reservation['end'].get('date'))
+                reservation_end_str = reservation['end']['dateTime']
                 reservation_end = datetime.datetime.fromisoformat(reservation_end_str.replace('Z', '+00:00'))
                 
                 if slot_start < reservation_end and slot_end > reservation_start:
@@ -63,13 +70,38 @@ def available_slots(request):
                 reservation_url = f"{reverse('reserve_slot')}?{urlencode({'slot_start': slot_start.isoformat()})}"
                 slots_by_date[slot_date].append({
                     'start': slot_start,
-                    'reservation_url': reservation_url
+                    'end': slot_end,
+                    'reservation_url': reservation_url,
                 })
             
             slot_start = slot_start + datetime.timedelta(minutes=30)
 
+    return dict(slots_by_date)
+
+def available_slots(request):
+    service = get_google_calendar_service()
+
+    # Get the current date and calculate the start and end of the week
+    today = datetime.datetime.now(datetime.timezone.utc)
+    start_of_week = today - datetime.timedelta(days=today.weekday())
+    end_of_week = start_of_week + datetime.timedelta(days=6)
+
+    # Get the week number from the request, default to the current week
+    week_number = int(request.GET.get('week', 0))
+    start_of_week += datetime.timedelta(weeks=week_number)
+    end_of_week += datetime.timedelta(weeks=week_number)
+
+    # Ensure the time starts at 00:00 and ends at 23:59
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_week = end_of_week.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    slots_by_date = get_available_slots(service, start_of_week, end_of_week)
+
     context = {
-        'slots_by_date': dict(slots_by_date)
+        'slots_by_date': slots_by_date,
+        'week_number': week_number,
+        'start_of_week': start_of_week,
+        'end_of_week': end_of_week,
     }
     return render(request, 'app/available_slots.html', context)
 
@@ -104,6 +136,8 @@ def reserve_slot(request):
 
             available_slots = available_slots_result.get('items', [])
             slot_exists = available_slots != []
+
+            # TODO: Validate that the reservation is not made the same day
             
             if not slot_exists:
                 form.add_error(None, 'Pasirinktas laikas nėra galimas.')
