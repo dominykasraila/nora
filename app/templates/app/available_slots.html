@@ -1,0 +1,21 @@
+{% extends 'app/base.html' %}
+
+{% block content %}
+  <h1>Laisvos vietos</h1>
+  {% if slots_by_date %}
+    {% for date, slots in slots_by_date.items %}
+      <h2>{{ date }}</h2>
+      <ul>
+        {% for slot in slots %}
+          <li>
+            <a href="{{ slot.reservation_url }}">
+              {{ slot.start|date:'H:i' }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endfor %}
+  {% else %}
+    <p>Nėra vietų</p>
+  {% endif %}
+{% endblock %}

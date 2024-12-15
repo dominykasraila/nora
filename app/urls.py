@@ -4,6 +4,6 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
-    path('events/', views.google_calendar_events, name='events'),
-    path('create_event/', views.create_event, name='create_event'),
+    path('available_slots/', views.available_slots, name='available_slots'),
+    path('reserve_slot/', views.reserve_slot, name='reserve_slot'),
 ]

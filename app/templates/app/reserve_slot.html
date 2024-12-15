@@ -1,0 +1,12 @@
+{% extends 'app/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<h1>Rezervuoti paslaugą</h1>
+<p>Laikas: {{ slot_start|date:"Y-m-d H:i" }}</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">Rezervuoti</button>
+</form>
+{% endblock %}
