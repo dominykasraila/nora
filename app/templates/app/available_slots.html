@@ -3,51 +3,48 @@
 {% block content %}
   <h1>Laisvos vietos</h1>
 
-  
-  
   <div class="pagination">
     <span class="step-links">
       {% if week_number > 0 %}
-      <a href="?week={{ week_number|add:-1 }}">&#8592; Atgal</a>
+        <a href="?week={{ week_number|add:- 1 }}">&#8592; Atgal</a>
       {% endif %}
-      
+
       <a href="?week={{ week_number|add:1 }}">Toliau &#8594;</a>
     </span>
   </div>
-  
-  <p>{{ start_of_week|date:"Y-m-d" }} - {{ end_of_week|date:"Y-m-d" }}</p>
-  
-  <h2>{{ start_of_week|date:"F"|capfirst }}</h2>
 
-  <table class="table table-bordered" style="width: 100%; table-layout: fixed;">
-    <thead>
-      <tr>
-        {% for date, slots in slots_by_date.items %}
-          <th style="text-align: center;">{{ date|date:"D" }}<br>{{ date|date:"d" }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        {% for date, slots in slots_by_date.items %}
-          <td style="text-align: center;">
-            {% if slots %}
-              <ul style="list-style-type: none; padding: 0;">
-                {% for slot in slots %}
-                  <li>
-                    <a href="{{ slot.reservation_url }}">
-                      {{ slot.start|date:'H:i' }}
-                    </a>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <p>Nėra laisvų vietų</p>
-            {% endif %}
-          </td>
-        {% endfor %}
-      </tr>
-    </tbody>
-  </table>
+  <p>{{ start_of_week|date:'Y-m-d' }} - {{ end_of_week|date:'Y-m-d' }}</p>
 
+  <h2>{{ start_of_week|date:'F'|capfirst }}</h2>
+  {% comment %}TODO: Make columns equal width{% endcomment %}
+  <div class="table-responsive">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          {% for date, slots in slots_by_date.items %}
+            <th style="text-align: center;">
+              {{ date|date:'D' }}<br />{{ date|date:'d' }}
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {% for date, slots in slots_by_date.items %}
+            <td style="text-align: center;">
+              {% if slots %}
+                <div class="d-flex flex-column align-items-center">
+                  {% for slot in slots %}
+                    <a href="{{ slot.reservation_url }}" class="btn btn-sm btn-outline-primary mb-1">{{ slot.start|date:'H:i' }}</a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p>Nėra laisvų vietų</p>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
 {% endblock %}
