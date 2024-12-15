@@ -103,11 +103,8 @@ def reserve_slot(request):
             ).execute()
 
             available_slots = available_slots_result.get('items', [])
-            slot_exists = any(
-                slot_start <= datetime.datetime.fromisoformat(slot['start'].get('dateTime').replace('Z', '+00:00')) < slot_end
-                for slot in available_slots
-            )
-
+            slot_exists = available_slots != []
+            
             if not slot_exists:
                 form.add_error(None, 'Pasirinktas laikas nėra galimas.')
 
